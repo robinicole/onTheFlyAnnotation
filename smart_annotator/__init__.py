@@ -1,1 +1,1 @@
-from .main import DataToClassify
+from .main import DataToClassifyStd

@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+
+from typing import List, Tuple
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -7,18 +10,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import LatentDirichletAllocation as LDA
-
-class DataToClassify:
-    MODEL_TO_FIT  = Pipeline([
-        ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('logreg', RandomForestClassifier())
-    ])
-    LDA_PIPELINE = Pipeline([
-        ('count', CountVectorizer()),
-        ('lda', LDA(n_components=100,n_jobs=1))
-    ])
-    def __init__(self, data_to_classify):
+class DataToClassifyBase:
+    MODEL_TO_FIT: Pipeline
+    LDA_PIPELINE : Pipeline
+    def __init__(self, data_to_classify: list):
         """
         Initialise a dataframe with the data to classify, 
         the labels, and the topics generated with the LDA
@@ -31,7 +26,7 @@ class DataToClassify:
         })
         self.was_fitted = False
     
-    def list_data(self, n=100):
+    def list_data(self, n=100) -> List[Tuple[int, str]]:
         """
         list the 100 data which are the most likely to be of the category we look for
         """
@@ -53,18 +48,32 @@ class DataToClassify:
         self.df.loc[index, 'y'] = 1
         
     @staticmethod
-    def get_n_negative_data_to_sample(n_neg: int, n_pos: int):
+    def get_n_negative_data_to_sample(n_neg: int, n_pos: int) -> int:
+        """
+        Return the number of data from the negative class to sample 
+        (y = 0) depending on the total number of positive classes (n_pos)
+        and negative classes (n_neg) in the overall dataset
+        """
         return n_pos * 10
     
     @staticmethod
-    def get_negative_data(df):
+    def get_negative_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Get a dataframe with only the negative class data
+        """
         return df[df.y == 0]
     
     @staticmethod
-    def get_positive_data(df):
+    def get_positive_data(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Get a dataframe with only the positive class data
+        """
         return df[df.y == 1]
     
-    def sample_data_for_classifier(self):
+    def sample_data_for_classifier(self) -> pd.DataFrame:
+        """
+        Get a sample of data to be fed to the classifier
+        """
         positive_data = self.get_positive_data(self.df)
         negative_data = self.get_negative_data(self.df)
         n_neg_data_to_sample = self.get_n_negative_data_to_sample(
@@ -80,9 +89,17 @@ class DataToClassify:
     
     def update_score(self):
         sampled_data = self.sample_data_for_classifier()
-        X = sampled_data.X
+        X_sample = np.array([np.array(el) for el in sampled_data.topics])
         y = sampled_data.y
-        fitted_model = self.MODEL_TO_FIT.fit(X, y)
-        self.df.score = fitted_model.predict_proba(self.df.X)[:, 1]
+        fitted_model = self.MODEL_TO_FIT.fit(X_sample, y)
+        X_data = np.array([np.array(el) for el in self.df.topics])
+        self.df.score = fitted_model.predict_proba(X_data)[:, 1]
         self.was_fitted = True
         return self.df
+
+class DataToClassifyStd(DataToClassifyBase):
+    MODEL_TO_FIT: Pipeline  = RandomForestClassifier()
+    LDA_PIPELINE : Pipeline = Pipeline([
+        ('count', CountVectorizer()),
+        ('lda', LDA(n_components=10,n_jobs=1))
+    ])
