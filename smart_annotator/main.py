@@ -13,16 +13,24 @@ from sklearn.decomposition import LatentDirichletAllocation as LDA
 class DataToClassifyBase:
     MODEL_TO_FIT: Pipeline
     LDA_PIPELINE : Pipeline
+    
+    @classmethod
+    def process_data(cls, data: list) -> np.array:
+        """
+        Return a list of arrays of topics. 
+        For example `[list(el) for el in self.LDA_PIPELINE.fit_transform(data)]`
+        """
+        raise NotImplementedError
+
     def __init__(self, data_to_classify: list):
         """
-        Initialise a dataframe with the data to classify, 
-        the labels, and the topics generated with the LDA
+        Initialise a dataframe with the data to classify and preprocess them
         """
         self.df = pd.DataFrame({
             'X': data_to_classify,
             'y': 0, 
             'score': None, 
-            'topics': [list(el) for el in self.LDA_PIPELINE.fit_transform(data_to_classify)]
+            'process_data': self.process_data(data_to_classify)
         })
         self.was_fitted = False
     
@@ -89,10 +97,10 @@ class DataToClassifyBase:
     
     def update_score(self):
         sampled_data = self.sample_data_for_classifier()
-        X_sample = np.array([np.array(el) for el in sampled_data.topics])
+        X_sample = np.array([np.array(el) for el in sampled_data['process_data']])
         y = sampled_data.y
         fitted_model = self.MODEL_TO_FIT.fit(X_sample, y)
-        X_data = np.array([np.array(el) for el in self.df.topics])
+        X_data = np.array([np.array(el) for el in self.df['process_data']])
         self.df.score = fitted_model.predict_proba(X_data)[:, 1]
         self.was_fitted = True
         return self.df
@@ -103,3 +111,6 @@ class DataToClassifyStd(DataToClassifyBase):
         ('count', CountVectorizer()),
         ('lda', LDA(n_components=10,n_jobs=1))
     ])
+    @classmethod
+    def process_data(cls, data: list):
+        return [list(el) for el in cls.LDA_PIPELINE.fit_transform(data)]
