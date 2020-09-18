@@ -44,7 +44,7 @@ class DataToClassifyBase:
         return list(sorted_df.X[:n].iteritems())
     
     def print_data(self):
-        """
+        """label-studio-ml init my-ml-backend --script models/bert_classifier.py
         Helper to print the data returned by list_data
         """
         for ix, text in self.list_data():
@@ -113,4 +113,7 @@ class DataToClassifyStd(DataToClassifyBase):
     ])
     @classmethod
     def process_data(cls, data: list):
+        """
+        Transform the data into arrays of number with latent dirichlet allocation
+        """
         return [list(el) for el in cls.LDA_PIPELINE.fit_transform(data)]
