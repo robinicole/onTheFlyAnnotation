@@ -54,7 +54,9 @@ class DataToClassifyBase:
             
     def label_data(self, index):
         self.df.loc[index, 'y'] = 1
-        
+        new_data = self.df.loc[index].to_dict()
+        return new_data
+
     @staticmethod
     def get_n_negative_data_to_sample(n_neg: int, n_pos: int) -> int:
         """
