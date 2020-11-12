@@ -10,5 +10,5 @@ run_notebook:
 build-docker:
 	docker build . -t dataset_generator/backend
 
-run-docker:
+run-docker: build-docker
 	docker run  -p8000:8000 -t dataset_generator/backend
