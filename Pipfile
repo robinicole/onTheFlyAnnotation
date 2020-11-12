@@ -6,7 +6,6 @@ verify_ssl = true
 [dev-packages]
 jupyter = "*"
 autopep8 = "*"
-black = "*"
 
 [packages]
 scikit-learn = "*"

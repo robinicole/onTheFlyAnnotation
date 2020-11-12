@@ -2,4 +2,9 @@
 
 Train model on the fly.
 
-To run the api inside a docker container, run
+To run a the api type `make run-docker` 
+
+# TODO
+- Add a better model to cluster text
+- Add a frontend 
+- Add a unified interface for data to fit 

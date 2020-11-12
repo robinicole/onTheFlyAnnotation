@@ -2,3 +2,7 @@ Dockerfile
 .gitignore
 Makefile
 .*
+.ipynb_checkpoints/*
+.idea/*
+.vscode
+notebooks/.ipynb_checkpoints/
